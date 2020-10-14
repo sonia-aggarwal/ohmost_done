@@ -1,6 +1,6 @@
-# README 
+# MSP-EXP430F5529LP
 
-MSP Setup
+This file will be used to setup the MSP-EXP430F5529LP.
 
 ## Links & Resources 
 
