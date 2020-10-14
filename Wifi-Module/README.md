@@ -1,6 +1,6 @@
-# README 
+# CC3100Boost Board
 
-Wi-Fi Module Setup 
+This will be used to setup the CC3100Boost Board
 
 ## Links & Resources 
 
