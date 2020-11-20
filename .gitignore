@@ -50,3 +50,18 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#CCS Files
+Release/*
+.xdchelp
+config/*
+.launches/*
+targetconfigs/*
+.ccsproject
+.cproject
+.project
+.settings/*
+*/.launches/*
+*/.settings/*
+*/Debug/*
+*/targetconfigs/*
