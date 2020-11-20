@@ -6,6 +6,7 @@
  */
 
 #include "tcp_socket.h"
+#include <stdio.h>
 
 /*
  * STATIC FUNCTION DEFINITIONS -- Start
@@ -13,7 +14,7 @@
 static _i32 configureSimpleLinkToDefaultState();
 static _i32 establishConnectionWithAP();
 static _i32 initializeAppVariables();
-static _i32 BsdTcpClient(_u16 Port);
+static _i32 BsdTcpClient(_u16 Port, int data1, char * field);
 static void displayBanner();
 /*
  * STATIC FUNCTION DEFINITIONS -- End
@@ -24,6 +25,41 @@ _u8 g_Status = 0;
 /*
  * USER FUNCTIONS
  */
+
+#define MESSAGE_TEMPLATE "POST /user HTTP/1.1\r\nHost: us-central1-ohmost-done.cloudfunctions.net\r\nContent-Type: application/json\r\nContent-Length: 18\r\nUser-Agent: MSP430F5529/0.5.1\r\n\r\n{\"SMMData\":\"0000\"}\r\n"
+
+void createString(char * buffer, int data1, char * field){
+    char string1[5] = "00000";
+
+    sprintf(string1, "%d", data1);
+
+    int nullboi;
+
+    for (nullboi = 0; nullboi < 5; nullboi ++){
+        if (string1[nullboi] == '\0'){
+            break;
+        }
+    }
+
+    int place = 171;
+    int loc;
+    for (loc = nullboi-1; loc >= 0; loc--){
+        buffer[place] = string1[loc];
+        place--;
+    }
+
+    if (place != 168){
+        while (place >= 168){
+            buffer[place] = '0';
+            place--;
+        }
+    }
+
+    buffer[158] = field[0];
+    buffer[159] = field[1];
+    buffer[160] = field[2];
+
+}
 
 /*
  * ASYNCHRONOUS EVENT HANDLERS -- Start
@@ -211,7 +247,7 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock)
                     CLI_Write(" [SOCK EVENT] Close socket operation, failed to transmit all queued packets\n\r");
                     break;
                 default:
-                    CLI_Write(" [SOCK EVENT] Unexpected event 6666 \n\r");
+                    CLI_Write(" [SOCK EVENT] Unexpected event\n\r");
                     break;
             }
             break;
@@ -228,7 +264,7 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock)
 /*
  * Application's entry point
  */
-int connectToServer()
+int connectToServer(int data1, char * field)
 {
     _i32 retVal = -1;
 
@@ -290,7 +326,7 @@ int connectToServer()
 
     CLI_Write(" Establishing connection with TCP server \n\r");
     /*Before proceeding, please make sure to have a server waiting on PORT_NUM*/
-    retVal = BsdTcpClient(PORT_NUM);
+    retVal = BsdTcpClient(PORT_NUM, data1, field);
     if(retVal < 0)
         CLI_Write(" Failed to establishing connection with TCP server \n\r");
     else
@@ -479,7 +515,7 @@ static _i32 establishConnectionWithAP()
                     right port number before calling this function.
                     Otherwise the socket creation will fail.
 */
-static _i32 BsdTcpClient(_u16 Port)
+static _i32 BsdTcpClient(_u16 Port, int data1, char * field)
 {
     SlSockAddrIn_t  Addr;
 
@@ -490,7 +526,12 @@ static _i32 BsdTcpClient(_u16 Port)
     /*
      *
      */
-    char request[] = "POST /user HTTP/1.1\r\nHost: us-central1-ohmost-done.cloudfunctions.net\r\nContent-Type: application/json\r\nContent-Length: 22\r\nUser-Agent: MSP430F5529/0.5.1\r\n\r\n{\"text_field\":\"Grass\"}\r\n";
+
+    //char buffer[BUF_SIZE];
+
+    char request[] = MESSAGE_TEMPLATE;
+
+    createString(&request, data1, field);
 
     Addr.sin_family = SL_AF_INET;
     Addr.sin_port = sl_Htons((_u16)Port);

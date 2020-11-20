@@ -48,7 +48,7 @@ union
  * GLOBAL VARIABLES -- End
  */
 
-int connectToServer();
+int connectToServer(int data1, char * field);
 
 
 

@@ -19,11 +19,17 @@ volatile unsigned int A3results[Num_of_Results];
 
 void initADC();
 
-int calculateWaterLevel(int vRef, int Vmeas);
-
 void enableADCinterrupt();
 
 void disableADCinterrupt();
 
+int SMB_Avg();
+
+int SMM_Avg();
+
+int WL_Avg();
+
+
+int WL_Level(int ref, int avg);
 
 #endif /* ADC_H_ */

@@ -32,7 +32,7 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-*/
+ */
 
 /*
  * Application Name     -   TCP socket
@@ -42,37 +42,124 @@
  *                          doc\examples\tcp_socket.pdf
  */
 
-
 #include "tcp_socket.h"
 #include "ADC.h"
+#include "board.h"
+#include "GPIO.h"
+#include "timer_a.h"
+#include <stdio.h>
 
+volatile int SM1_value;
+volatile int SM2_value;
+
+extern unsigned long mintTimer;
 
 int main(int argc, char** argv)
 {
     /* Stop WDT and initialize the system-clock of the MCU
-       These functions needs to be implemented in PAL */
+     These functions needs to be implemented in PAL */
     stopWDT();
     initClk();
 
     /* Configure command line interface */
     CLI_Configure();
 
-    // Pin 1.6
-    P1OUT &= ~BIT6;
-    P1DIR |= BIT6;
+    platform_timer_init();
 
-    // Pin 2.2
-    P2OUT &= ~BIT2;
-    P2DIR |= BIT2;
+    initADC();
+    initPumps();
+    initLEDs();
 
-    //Turn on 1.6
-    P1OUT |= BIT6;
+    int StartLightsMintTimer = 0;
+    int StartLightsBasilTimer = 0;
+    int StartSensorTimer = 0;
 
-    //Turn on 2.2
-    P2OUT |= BIT2;
+    int MaxMintLightsOn = 1;
+    int MaxBasilLightsOn = 1;
 
+    int MaxMintLightsOff = 1;
+    int MaxBasilLightsOff = 1;
 
-    connectToServer();
+    int MintLightsOn = 0;
+    int BasilLightsOn = 0;
+
+    int CurrentTime = 0;
+
+    while (1)
+    {
+
+        CurrentTime = platform_get_time_in_mins();
+
+        if (CurrentTime - StartLightsMintTimer >= MaxMintLightsOn
+                && MintLightsOn)
+        {
+            turnLedOff(LED1);
+            StartLightsMintTimer = CurrentTime;
+            MintLightsOn = 0;
+        }
+        else if (CurrentTime - StartLightsMintTimer >= MaxMintLightsOff
+                && !MintLightsOn)
+        {
+            turnLedOn(LED1);
+            StartLightsMintTimer = CurrentTime;
+            MintLightsOn = 1;
+        }
+
+        if (CurrentTime - StartLightsBasilTimer >= MaxBasilLightsOn
+                && BasilLightsOn)
+        {
+            turnLedOff(LED2);
+            StartLightsBasilTimer = CurrentTime;
+            BasilLightsOn = 0;
+        }
+        else if (CurrentTime - StartLightsBasilTimer >= MaxBasilLightsOff
+                && !BasilLightsOn)
+        {
+            turnLedOn(LED2);
+            StartLightsBasilTimer = CurrentTime;
+            BasilLightsOn = 1;
+        }
+
+        if (CurrentTime - StartSensorTimer >= 1)
+        {
+            if (SMM_Avg() > 2800)
+            {
+                int value;
+                value = DisableLED(LED1);
+                turnPumpOn(PUMP1);
+                Delay(15000);
+                turnPumpOff(PUMP1);
+                EnableLED(LED1, value);
+            }
+
+            if (SMB_Avg() > 2800)
+            {
+                int value;
+                value = DisableLED(LED2);
+                turnPumpOn(PUMP2);
+                Delay(15000);
+                turnPumpOff(PUMP2);
+                EnableLED(LED2, value);
+            }
+            StartSensorTimer = CurrentTime;
+        }
+
+//        int value;
+//        value = DisableLED(LED1);
+//        Delay(500);
+//        EnableLED(LED1, value);
+//        Delay(500);
+
+        if (platform_get_time_in_mins() % 5 == 0
+                && platform_get_time_in_secs() % 60 == 0)
+        {
+            connectToServer(WL_Avg(), "WLN");
+            Delay(50);
+            connectToServer(SMM_Avg(), "SMM");
+            Delay(50);
+            connectToServer(SMB_Avg(), "SMB");
+        }
+    }
     return 0;
 }
 
