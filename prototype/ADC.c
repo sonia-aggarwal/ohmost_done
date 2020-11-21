@@ -68,6 +68,7 @@ int WL_Avg()
 
 int WL_Ref()
 {
+
     int sum = 0;
     int ind;
     for (ind = 0; ind < 8; ind++)
@@ -77,9 +78,18 @@ int WL_Ref()
     return (sum >> 3);
 }
 
+
 int WL_Level(int ref, int avg)
 {
+    if (avg > 3330){
+        return 1111;
+    }
 
+    int dif = 3330 - avg;
+
+    int perc = dif / 20;
+
+    return perc;
 }
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)

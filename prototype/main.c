@@ -83,6 +83,8 @@ int main(int argc, char** argv)
     int MintLightsOn = 0;
     int BasilLightsOn = 0;
 
+    int SensorInterval = 1;
+
     int CurrentTime = 0;
 
     while (1)
@@ -120,16 +122,20 @@ int main(int argc, char** argv)
             BasilLightsOn = 1;
         }
 
-        if (CurrentTime - StartSensorTimer >= 1)
+        if (CurrentTime - StartSensorTimer >= SensorInterval)
         {
+            int pumpsRun = 0;
+
             if (SMM_Avg() > 2800)
             {
                 int value;
                 value = DisableLED(LED1);
                 turnPumpOn(PUMP1);
-                Delay(15000);
+                //Delay(15000);
+                Delay(500);
                 turnPumpOff(PUMP1);
                 EnableLED(LED1, value);
+                pumpsRun++;
             }
 
             if (SMB_Avg() > 2800)
@@ -137,26 +143,28 @@ int main(int argc, char** argv)
                 int value;
                 value = DisableLED(LED2);
                 turnPumpOn(PUMP2);
-                Delay(15000);
+                //Delay(15000);
+                Delay(500);
                 turnPumpOff(PUMP2);
                 EnableLED(LED2, value);
+                pumpsRun++;
             }
             StartSensorTimer = CurrentTime;
+
+            if (pumpsRun)
+            {
+                connectToServer(WL_Level(WL_Ref(), WL_Avg()), "WLD");
+            }
         }
 
-//        int value;
-//        value = DisableLED(LED1);
-//        Delay(500);
-//        EnableLED(LED1, value);
-//        Delay(500);
 
         if (platform_get_time_in_mins() % 5 == 0
                 && platform_get_time_in_secs() % 60 == 0)
         {
-            connectToServer(WL_Avg(), "WLN");
-            Delay(50);
+            connectToServer(WL_Level(WL_Ref(), WL_Avg()), "WLN");
+            Delay(10);
             connectToServer(SMM_Avg(), "SMM");
-            Delay(50);
+            Delay(10);
             connectToServer(SMB_Avg(), "SMB");
         }
     }

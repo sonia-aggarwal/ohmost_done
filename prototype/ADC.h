@@ -29,6 +29,7 @@ int SMM_Avg();
 
 int WL_Avg();
 
+int WL_Ref();
 
 int WL_Level(int ref, int avg);
 
